@@ -1,0 +1,77 @@
+{
+  "short_name": "SecureSonic",
+  "name": "SecureSonic - Güvenli Toplantı Platformu",
+  "description": "Sesli kimlik doğrulama ile güvenli toplantılar için SecureSonic platformu",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "security", "communication"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Toplantılarım",
+      "short_name": "Toplantılar",
+      "description": "Toplantılarınızı görüntüleyin",
+      "url": "/dashboard/meetings",
+      "icons": [
+        {
+          "src": "shortcut-meetings.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Toplantı Oluştur",
+      "short_name": "Yeni",
+      "description": "Yeni toplantı oluşturun",
+      "url": "/dashboard/meetings/new",
+      "icons": [
+        {
+          "src": "shortcut-new-meeting.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "dir": "ltr",
+  "lang": "tr-TR",
+  "scope": "/",
+  "serviceworker": {
+    "src": "service-worker.js",
+    "scope": "/"
+  }
+} 

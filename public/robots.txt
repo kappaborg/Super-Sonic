@@ -1,0 +1,31 @@
+# SecureSonic Robots.txt
+# https://secure-sonic.com
+
+User-agent: *
+Allow: /
+Allow: /dashboard
+Allow: /meetings
+Allow: /profile
+Allow: /register
+Allow: /login
+Allow: /about
+Allow: /contact
+
+# Özel güvenlik sayfalarına robota erişimi engelleme
+Disallow: /api/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /voice-auth/
+Disallow: /settings/security
+Disallow: /account/reset-password
+Disallow: /account/verify
+Disallow: /.well-known/
+
+# Medya dosyalarına erişime izin ver
+Allow: /media/
+
+# Sitemap dosyası
+Sitemap: https://secure-sonic.com/sitemap.xml
+
+# Crawl gecikmesi - sunucu yükünü azaltmak için
+Crawl-delay: 5 

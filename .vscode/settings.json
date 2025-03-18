@@ -1,0 +1,45 @@
+{
+  "deno.enable": false,
+  "deno.enablePaths": [
+    "./supabase/functions"
+  ],
+  "deno.unstable": true,
+  "deno.config": "./supabase/functions/deno.json",
+  "deno.suggest.imports.hosts": [
+    "https://deno.land",
+    "https://esm.sh"
+  ],
+  "deno.lint": true,
+  
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "editor.formatOnSave": true,
+  
+  "files.associations": {
+    "**/supabase/functions/**/*.ts": "typescript"
+  },
+  
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true
+  }
+} 
