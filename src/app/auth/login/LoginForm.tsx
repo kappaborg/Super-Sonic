@@ -6,12 +6,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { RateLimitWarning } from '@/components/ui/RateLimitWarning';
+import { useToast } from '@/components/ui/use-toast';
 import { loginRequestSchema } from '@/lib/models';
-import supabaseClient from '@/lib/supabase/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -20,17 +21,27 @@ type LoginFormValues = z.infer<typeof loginRequestSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
+  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [retryAfterSeconds, setRetryAfterSeconds] = useState(60);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Form hook
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: {
@@ -45,35 +56,51 @@ export function LoginForm() {
     setError(null);
 
     try {
-      // Sign in with Supabase
-      const { error } = await supabaseClient.auth.signInWithPassword({
+      // Sign in with NextAuth
+      const result = await signIn('credentials', {
+        redirect: false,
         email: data.email,
         password: data.password,
       });
 
-      if (error) {
+      if (!result) {
+        setError('No response from authentication server. Please try again.');
+        return;
+      }
+
+      if (result.error) {
         // Check for rate limit error
-        if (error.status === 429) {
+        if (result.error.includes('rate limit') || result.status === 429) {
           setIsRateLimited(true);
-          
-          // Use Retry-After header or default value
-          const retryAfter = error.message.match(/(\d+) seconds/)?.[1] || '60';
-          setRetryAfterSeconds(parseInt(retryAfter, 10));
-          
+          setRetryAfterSeconds(60); // Default 60 seconds
           setError('You have reached the request limit. Please try again later.');
         } else {
-          setError(error.message || 'An error occurred while logging in.');
+          setError(result.error || 'An error occurred while logging in.');
         }
-      } else {
+      } else if (result.ok) {
+        // Success notification
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+          variant: "success"
+        });
+
         // Successful login, redirect to main page
-        router.push('/dashboard');
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Connection error. Please check your internet connection.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Set demo account credentials
+  const useDemoAccount = () => {
+    setValue('email', 'demo@securesonic.com');
+    setValue('password', 'password123');
   };
 
   // Retry after rate limit warning
@@ -81,6 +108,10 @@ export function LoginForm() {
     setIsRateLimited(false);
     setError(null);
   };
+
+  if (!isMounted) {
+    return <div className="p-8 flex justify-center items-center">Loading...</div>;
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -90,8 +121,8 @@ export function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {isRateLimited ? (
-            <RateLimitWarning 
-              retryAfter={retryAfterSeconds} 
+            <RateLimitWarning
+              retryAfter={retryAfterSeconds}
               onRetry={handleRetry}
               message="Too many failed login attempts. Please wait a moment."
             />
@@ -102,7 +133,7 @@ export function LoginForm() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -118,7 +149,7 @@ export function LoginForm() {
                   <p className="text-red-500 text-sm">{errors.email.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -147,7 +178,7 @@ export function LoginForm() {
                   <p className="text-red-500 text-sm">{errors.password.message}</p>
                 )}
               </div>
-              
+
               <div className="flex justify-end">
                 <Button
                   variant="link"
@@ -162,7 +193,7 @@ export function LoginForm() {
             </>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex flex-col gap-4">
           {!isRateLimited && (
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -170,7 +201,22 @@ export function LoginForm() {
               Sign In
             </Button>
           )}
-          
+
+          <div className="text-center mt-3 text-sm border p-3 rounded-md border-gray-200 bg-gray-50">
+            <p className="text-gray-600 mb-1">Demo Account:</p>
+            <p className="text-gray-800"><strong>Email:</strong> demo@securesonic.com</p>
+            <p className="text-gray-800"><strong>Password:</strong> password123</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={useDemoAccount}
+            >
+              Use Demo Account
+            </Button>
+          </div>
+
           <div className="text-center text-sm">
             Don't have an account?{' '}
             <Button
@@ -178,6 +224,7 @@ export function LoginForm() {
               className="p-0"
               onClick={() => router.push('/auth/register')}
               disabled={isLoading}
+              type="button"
             >
               Sign Up
             </Button>

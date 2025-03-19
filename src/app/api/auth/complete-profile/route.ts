@@ -1,6 +1,6 @@
-import { auth } from '@/lib/auth/auth';
+import { authOptions } from '@/lib/auth/auth';
 import { ApiError, ApiErrorCode } from '@/types/api';
-import { Session } from 'next-auth';
+import { getServerSession, Session } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -24,7 +24,7 @@ interface AuthSession extends Session {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth() as AuthSession;
+    const session = await getServerSession(authOptions) as AuthSession;
 
     if (!session?.user) {
       throw new ApiError(ApiErrorCode.UNAUTHORIZED, 'Authentication required', 401);
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     // Update user profile 
     // TODO: Implement actual database update when database is set up
-    
+
     return NextResponse.json({
       success: true,
       message: 'Profile completed successfully',
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('Profile completion error:', error);
-    
+
     if (error instanceof ApiError) {
       return NextResponse.json({
         success: false,
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         }
       }, { status: error.statusCode });
     }
-    
+
     return NextResponse.json({
       success: false,
       error: {

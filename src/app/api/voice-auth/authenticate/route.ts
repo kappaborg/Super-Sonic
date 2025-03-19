@@ -1,7 +1,5 @@
-import { ApiError, ApiErrorCode, withErrorHandling } from '@/lib/api-errors';
-import { handleOptionsRequest, rateLimiter, validateRequest } from '@/lib/api-middleware';
-import { supabase } from '@/lib/supabase';
-import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/api-errors';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 // Ses doğrulama istek şeması
@@ -10,58 +8,17 @@ const voiceAuthRequestSchema = z.object({
   userId: z.string().uuid().optional(),
 });
 
+// Mock implementation for build time
 export const POST = withErrorHandling(async (req: NextRequest) => {
-  // CORS OPTIONS isteğini kontrol et
-  const corsResponse = handleOptionsRequest(req);
-  if (corsResponse) return corsResponse;
-
-  // Rate limiting uygula - güvenlik için daha sıkı limit
-  const rateLimitResponse = await rateLimiter(req, { limit: 10, windowMs: 60000 });
-  if (rateLimitResponse) return rateLimitResponse;
-
-  // İstek gövdesini doğrula
-  const { voiceFeatures, userId } = await validateRequest(req, voiceAuthRequestSchema);
-
-  // Supabase oturumundan kullanıcıyı al
-  const { data: { session } } = await supabase.auth.getSession();
-  const currentUserId = session?.user?.id;
-
-  // Kullanıcı kimliğini doğrula
-  if (!currentUserId && !userId) {
-    throw new ApiError(ApiErrorCode.UNAUTHORIZED, 'Bu işlem için kimlik doğrulama gerekli');
-  }
-
-  // Kullanıcı voiceprint verilerini al
-  const { data: voiceprints, error } = await supabase
-    .from('voiceprints')
-    .select('voice_features')
-    .eq('user_id', userId || currentUserId)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error || !voiceprints.length) {
-    throw new ApiError(
-      ApiErrorCode.NOT_FOUND, 
-      'Ses parmak izi bulunamadı. Lütfen önce ses kaydınızı yapın.'
-    );
-  }
-
-  // Ses özelliklerini karşılaştırma (basit bir örnek)
-  const storedFeatures = voiceprints[0].voice_features;
-  
-  // Gerçek uygulamalarda, bu karşılaştırma için daha gelişmiş algoritmalar kullanılır
-  // Şimdilik basit bir benzerlik skoru hesaplayalım
-  const similarityScore = calculateSimilarity(voiceFeatures, storedFeatures);
-  const threshold = 0.75; // %75 benzerlik eşiği
-  const authenticated = similarityScore >= threshold;
-
-  // Başarılı yanıt
-  return NextResponse.json({
-    authenticated,
-    confidence: similarityScore,
-    message: authenticated 
-      ? 'Ses kimliği doğrulandı'
-      : 'Ses kimliği doğrulanamadı'
+  // Simple response for build time
+  return new Response(JSON.stringify({
+    success: false,
+    message: "Voice authentication is disabled in this build."
+  }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 });
 

@@ -5,13 +5,24 @@ import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function NewUserPage() {
   const { user, session } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Handle client-side mounting to avoid hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+
+    // Check user auth status after mounting
+    if (isMounted && !user && !session) {
+      router.push('/auth/login');
+    }
+  }, [user, session, router, isMounted]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,7 +35,7 @@ export default function NewUserPage() {
 
     try {
       const userId = session?.user?.email || user?.email;
-      
+
       if (!userId) {
         throw new Error('User ID not found');
       }
@@ -42,20 +53,26 @@ export default function NewUserPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to complete profile');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to complete profile');
       }
 
       router.push('/dashboard');
     } catch (error) {
+      console.error('Profile completion error:', error);
       setError('Failed to complete your profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user && !isLoading) {
-    router.push('/auth/signin');
-    return null;
+  // Show loading state during hydration or when checking auth
+  if (!isMounted || (!user && !isLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   return (

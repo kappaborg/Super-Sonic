@@ -6,13 +6,14 @@ const withBundleAnalyzer = process.env.ANALYZE === 'true'
 
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.googleapis.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.googleapis.com *.vercel-scripts.com https://va.vercel-scripts.com https://www.google-analytics.com https://cdn.jsdelivr.net vercel.live;
   child-src 'self';
   style-src 'self' 'unsafe-inline' *.googleapis.com;
-  img-src 'self' blob: data: *.googleapis.com;
+  img-src 'self' blob: data: *.googleapis.com ui-avatars.com;
   font-src 'self' data: *.googleapis.com;
-  connect-src 'self' blob: *.googleapis.com;
+  connect-src 'self' blob: *.googleapis.com *.vercel-scripts.com https://va.vercel-scripts.com vitals.vercel-insights.com analytics.google.com;
   media-src 'self' blob:;
+  frame-src 'self' vercel.live;
 `;
 
 const securityHeaders = [
@@ -38,7 +39,7 @@ const securityHeaders = [
   },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+    value: 'camera=(), microphone=*, geolocation=(self), interest-cohort=()',
   },
   {
     key: 'X-Content-Type-Options',
@@ -52,28 +53,27 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   poweredByHeader: false,
-  
+
   images: {
     formats: ['image/avif', 'image/webp'],
-    domains: ['secure-sonic.com'],
+    domains: ['secure-sonic.com', 'ui-avatars.com'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
-  
+
   webpack: (config, { isServer }) => {
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
     };
-    
+
     config.resolve.alias = {
       ...config.resolve.alias,
       moment: 'date-fns',
     };
-    
+
     if (isServer) {
       config.externals = [
         ...config.externals,
@@ -81,12 +81,12 @@ const nextConfig = {
         'audiomotion-analyzer',
       ];
     }
-    
+
     return config;
   },
-  
+
   assetPrefix: process.env.NEXT_PUBLIC_CDN_URL || '',
-  
+
   async headers() {
     return [
       {
@@ -95,7 +95,7 @@ const nextConfig = {
       },
     ];
   },
-  
+
   async redirects() {
     return [
       {
@@ -105,18 +105,18 @@ const nextConfig = {
       },
     ];
   },
-  
+
   output: 'standalone',
-  
+
   productionBrowserSourceMaps: false,
-  
+
   compiler: {
     // styledComponents: true,
   },
-  
-  i18n: {
-    locales: ['tr', 'en'],
-    defaultLocale: 'tr',
+
+  // For hydration error fixes
+  experimental: {
+    serverComponentsExternalPackages: ['bcryptjs'],
   },
 };
 
